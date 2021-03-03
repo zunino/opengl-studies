@@ -1,5 +1,9 @@
 /**
  * I guess this is 'Hello, quads!'
+ *
+ * Switching to using EBO (Element Buffer Objects) and indexed
+ * drawing instead of triangle strips. This also means the drawing calls will
+ * be made with glDrawElements instead of glDrawArrays.
  * 
  * Andre Zunino <neyzunino@gmail.com>
  * Created 24 February 2021
@@ -101,6 +105,13 @@ int main(void)
          0.3f, -0.2f, 0.0f,
          0.3f,  0.7f, 0.0f,
     };
+
+    /* Vertex indexing for quad1 */
+    unsigned int indices1[] = {
+        0, 1, 2,
+        3, 1, 2,
+    };
+
     float quad2[] = {
         -0.3f, -0.5f, 0.0f,
         -0.3f,  0.5f, 0.0f,
@@ -113,19 +124,29 @@ int main(void)
     glGenBuffers(1, &vbo1);
     glGenBuffers(1, &vbo2);
 
-    /* Creating vertex attribute object (VAO) */
+    /* Vertex attribute object (VAO) */
     unsigned int vao1, vao2;
     glGenVertexArrays(1, &vao1);
     glGenVertexArrays(1, &vao2);
 
+    /* Element buffer object (EBO) */
+    unsigned int ebo1;
+    glGenBuffers(1, &ebo1);
+
+    /* Bind vao1, then vbo1 and copy vertex data for quad1 */
     glBindVertexArray(vao1);
     glBindBuffer(GL_ARRAY_BUFFER, vbo1);
     glBufferData(GL_ARRAY_BUFFER, sizeof quad1, quad1, GL_STATIC_DRAW);
+
+    /* Bind ebo1 and copy indices; ebo1 will be recalled by vao1 */
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo1);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof indices1, indices1, GL_STATIC_DRAW);
 
     /* Tell OpenGL how it should interpret vertex data */
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    /* Bind vao2, then vbo2 and copy vertex data for quad2 */
     glBindVertexArray(vao2);
     glBindBuffer(GL_ARRAY_BUFFER, vbo2);
     glBufferData(GL_ARRAY_BUFFER, sizeof quad2, quad2, GL_STATIC_DRAW);
@@ -149,7 +170,7 @@ int main(void)
 
         /* Drawing code */
         glBindVertexArray(vao1);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(vao2);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

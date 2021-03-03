@@ -11,4 +11,10 @@ Triangle example](https://learnopengl.com/Getting-started/Hello-Triangle).
 - A vertex array object (VAO) can be used to store vertex attribute
   configuration, so they can be easily recalled by binding the VAO.
 - Use of VAOs is required by OpenGL Core.
+- When drawing geometry that is made up of more than a single triangle,
+  one can draw triangle strips or use element buffer objects, which
+  consist of indices to the vertex data.
+- The last element buffer object that gets bound while a VAO is bound,
+  is stored as the VAO's element buffer object. Binding to a VAO then
+  also automatically binds that EBO.
 
