@@ -25,9 +25,10 @@ const char* const vertex_shader_src =
 
 const char* const fragment_shader_src =
     "#version 330\n"
-    "out vec4 FragColor;\n"
+    "uniform vec4 in_color;\n"
+    "out vec4 color;\n"
     "void main() {\n"
-    "  FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+    "  color = in_color;\n"
     "}\n";
 
 int main(void)
@@ -97,6 +98,9 @@ int main(void)
     /* Get rid of shaders since they've already been used */
     glDeleteShader(fragment_shader);
     glDeleteShader(vertex_shader);
+
+    /* Get location of uniform 'color_in' */
+    int in_color_location = glGetUniformLocation(shader_program, "in_color");
 
     /* Vertex data */
     float quad1[] = {
@@ -168,9 +172,21 @@ int main(void)
         /* Activate linked program */
         glUseProgram(shader_program);
 
+        /* Set uniform 'color_in' value */
+        glUniform4f(in_color_location, 0.4f, 0.1f, 0.05f, 1.0f);
+
+        /* Fill mode */
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
         /* Drawing code */
         glBindVertexArray(vao1);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        /* Set uniform 'color_in' value */
+        glUniform4f(in_color_location, 0.8f, 0.7f, 0.05f, 1.0f);
+
+        /* Wireframe mode */
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         glBindVertexArray(vao2);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
