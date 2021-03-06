@@ -16,20 +16,7 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 
-const char* const vertex_shader_src =
-    "#version 330\n"
-    "layout (location=0) in vec3 pos;\n"
-    "void main() {\n"
-    "  gl_Position = vec4(pos.x, pos.y, pos.z, 1.0f);\n"
-    "}\n";
-
-const char* const fragment_shader_src =
-    "#version 330\n"
-    "uniform vec4 in_color;\n"
-    "out vec4 color;\n"
-    "void main() {\n"
-    "  color = in_color;\n"
-    "}\n";
+#include <shader.hpp>
 
 int main(void)
 {
@@ -61,46 +48,10 @@ int main(void)
         return -1;
     }
 
-    /* Vertex shader */
-    unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_src, nullptr);
-    glCompileShader(vertex_shader);
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertex_shader, 512, nullptr, infoLog);
-        std::cerr << "Shader compilation failed: " << infoLog << '\n';
-        // clean up and exit?!
-    }
-
-    /* Fragment shader */
-    unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_src, nullptr);
-    glCompileShader(fragment_shader);
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragment_shader, 512, nullptr, infoLog);
-        std::cerr << "Shader compilation failed: " << infoLog << '\n';
-    }
-
-    /* Shader program */
-    unsigned int shader_program = glCreateProgram();
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    glLinkProgram(shader_program);
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(shader_program, 512, nullptr, infoLog);
-        std::cerr << "Shader program linking failed: " << infoLog << '\n';
-    }
-
-    /* Get rid of shaders since they've already been used */
-    glDeleteShader(fragment_shader);
-    glDeleteShader(vertex_shader);
+    ShaderProgram shader_prog{"shaders/vertex.shader", "shaders/fragment.shader"};
 
     /* Get location of uniform 'color_in' */
-    int in_color_location = glGetUniformLocation(shader_program, "in_color");
+    int in_color_location = glGetUniformLocation(shader_prog.id, "in_color");
 
     /* Vertex data */
     float quad1[] = {
@@ -170,10 +121,10 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         /* Activate linked program */
-        glUseProgram(shader_program);
+        shader_prog.use();
 
-        /* Set uniform 'color_in' value */
-        glUniform4f(in_color_location, 0.4f, 0.1f, 0.05f, 1.0f);
+        /* Set uniform 'in_color' value */
+        shader_prog.set_uniform_4f(in_color_location, 0.4f, 0.1f, 0.05f, 1.0f);
 
         /* Fill mode */
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -182,8 +133,8 @@ int main(void)
         glBindVertexArray(vao1);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        /* Set uniform 'color_in' value */
-        glUniform4f(in_color_location, 0.8f, 0.7f, 0.05f, 1.0f);
+        /* Set uniform 'in_color' value */
+        shader_prog.set_uniform_4f(in_color_location, 0.8f, 0.7f, 0.05f, 1.0f);
 
         /* Wireframe mode */
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -203,8 +154,10 @@ int main(void)
     glDeleteVertexArrays(1, &vao2);
     glDeleteBuffers(1, &vbo1);
     glDeleteBuffers(1, &vbo2);
-    glDeleteProgram(shader_program);
+
+    shader_prog.del();
 
     glfwTerminate();
+    
     return 0;
 }
