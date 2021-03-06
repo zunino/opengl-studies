@@ -11,7 +11,7 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 
 include_directories(inc)
-add_executable(quads src/main.cpp src/shader.cpp)
+add_executable(quads src/main.cpp src/shader_prog.cpp)
 
 add_library(glad STATIC 3rd/glad/glad.c)
 

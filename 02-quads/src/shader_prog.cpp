@@ -6,7 +6,7 @@
 
 #include <glad/glad.h>
 
-#include <shader.hpp>
+#include <shader_prog.hpp>
 
 using namespace std::string_literals;
 

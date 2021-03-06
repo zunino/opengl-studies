@@ -16,7 +16,7 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 
-#include <shader.hpp>
+#include <shader_prog.hpp>
 
 int main(void)
 {
