@@ -1,13 +1,18 @@
 /**
  * I guess this is 'Hello, quads!'
  *
+ * 3 March 2021
  * Switching to using EBO (Element Buffer Objects) and indexed
  * drawing instead of triangle strips. This also means the drawing calls will
  * be made with glDrawElements instead of glDrawArrays.
+ *
+ * 5 March 2021
+ * Implemented basic ShaderProgram abstraction.
+ * Implemented basic Geometry abstraction.
  * 
  * Andre Zunino <neyzunino@gmail.com>
  * Created 24 February 2021
- * Modified 3 March 2021
+ * Modified 5 March 2021
  */
 
 #include <iostream>
@@ -17,6 +22,7 @@
 #include <GLFW/glfw3.h>
 
 #include <shader_prog.hpp>
+#include <geometry.hpp>
 
 int main(void)
 {
@@ -53,95 +59,64 @@ int main(void)
     /* Get location of uniform 'color_in' */
     int in_color_location = glGetUniformLocation(shader_prog.id, "in_color");
 
-    /* Vertex data */
-    float quad1[] = {
-        -0.7f, -0.2f, 0.0f,
-        -0.7f,  0.7f, 0.0f,
-         0.3f, -0.2f, 0.0f,
-         0.3f,  0.7f, 0.0f,
+    Geometry quad1{
+        {
+           -0.7f, -0.2f, 0.0f,
+           -0.7f,  0.7f, 0.0f,
+            0.3f, -0.2f, 0.0f,
+            0.3f,  0.7f, 0.0f,
+        },
+        {
+            0, 1, 2,
+            3, 1, 2,
+        },
+        { 0.8f, 0.0f, 0.0f, 1.0f }
     };
 
-    /* Vertex indexing for quad1 */
-    unsigned int indices1[] = {
-        0, 1, 2,
-        3, 1, 2,
+
+    Geometry quad2{
+        {
+           -0.3f, -0.5f, 0.0f,
+           -0.3f,  0.5f, 0.0f,
+            0.7f, -0.5f, 0.0f,
+            0.7f,  0.5f, 0.0f,
+        },
+        {
+            0, 1, 2,
+            3, 1, 2,
+        },
+        { 0.0f, 0.8f, 0.0f, 1.0f }
     };
 
-    float quad2[] = {
-        -0.3f, -0.5f, 0.0f,
-        -0.3f,  0.5f, 0.0f,
-         0.7f, -0.5f, 0.0f,
-         0.7f,  0.5f, 0.0f,
+    Geometry quad3{
+        {
+           -0.5f, -0.4f, 0.0f,
+           -0.5f,  0.4f, 0.0f,
+            0.3f, -0.4f, 0.0f,
+            0.5f,  0.4f, 0.0f,
+        },
+        {
+            0, 1, 2,
+            3, 1, 2,
+        },
+        { 0.0f, 0.0f, 0.8f, 1.0f }
     };
-
-    /* Vertex buffer objects (VBO) to store vertex data in GPU's memory */
-    unsigned int vbo1, vbo2;
-    glGenBuffers(1, &vbo1);
-    glGenBuffers(1, &vbo2);
-
-    /* Vertex attribute object (VAO) */
-    unsigned int vao1, vao2;
-    glGenVertexArrays(1, &vao1);
-    glGenVertexArrays(1, &vao2);
-
-    /* Element buffer object (EBO) */
-    unsigned int ebo1;
-    glGenBuffers(1, &ebo1);
-
-    /* Bind vao1, then vbo1 and copy vertex data for quad1 */
-    glBindVertexArray(vao1);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo1);
-    glBufferData(GL_ARRAY_BUFFER, sizeof quad1, quad1, GL_STATIC_DRAW);
-
-    /* Bind ebo1 and copy indices; ebo1 will be recalled by vao1 */
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo1);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof indices1, indices1, GL_STATIC_DRAW);
-
-    /* Tell OpenGL how it should interpret vertex data */
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    /* Bind vao2, then vbo2 and copy vertex data for quad2 */
-    glBindVertexArray(vao2);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof quad2, quad2, GL_STATIC_DRAW);
-
-    /* Again for vao2, which has just been bound */
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    /* Unbind VAO */
-    glBindVertexArray(0);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         /* Activate linked program */
         shader_prog.use();
 
-        /* Set uniform 'in_color' value */
-        shader_prog.set_uniform_4f(in_color_location, 0.4f, 0.1f, 0.05f, 1.0f);
-
-        /* Fill mode */
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
         /* Drawing code */
-        glBindVertexArray(vao1);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        quad1.draw(shader_prog, in_color_location);
+        quad2.draw(shader_prog, in_color_location);
+        quad3.draw(shader_prog, in_color_location);
 
-        /* Set uniform 'in_color' value */
-        shader_prog.set_uniform_4f(in_color_location, 0.8f, 0.7f, 0.05f, 1.0f);
-
-        /* Wireframe mode */
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        glBindVertexArray(vao2);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
@@ -150,10 +125,9 @@ int main(void)
     }
 
     /* Deallocate objects */
-    glDeleteVertexArrays(1, &vao1);
-    glDeleteVertexArrays(1, &vao2);
-    glDeleteBuffers(1, &vbo1);
-    glDeleteBuffers(1, &vbo2);
+    quad3.del();
+    quad2.del();
+    quad1.del();
 
     shader_prog.del();
 
