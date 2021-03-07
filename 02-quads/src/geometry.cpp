@@ -9,7 +9,9 @@ Geometry::Geometry(
         std::initializer_list<int> indices,
         std::array<float, 4> color,
         ShaderProgram& shader_program) 
-    : n_indices{indices.size()}, color{color}, shader_program{shader_program} {
+    : n_indices{indices.size()}, color{color},
+      shader_program{shader_program},
+      in_color_location{shader_program.get_uniform_location("in_color")} {
 
     /* Vertex buffer object (VBO) to store vertex data in GPU memory */
     glGenBuffers(1, &this->vbo);
@@ -43,7 +45,7 @@ Geometry::Geometry(
 
 void Geometry::draw() {
     shader_program.set_uniform_4f(
-            shader_program.in_color_location,
+            this->in_color_location,
             color[0], color[1], color[2], color[3]);
     glBindVertexArray(this->vao);
     glDrawElements(GL_TRIANGLES, this->n_indices, GL_UNSIGNED_INT, 0);

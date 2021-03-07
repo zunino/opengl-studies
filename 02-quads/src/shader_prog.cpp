@@ -43,7 +43,8 @@ unsigned int compile_shader(const std::string& shader_src, GLenum gl_shader_type
 
 ShaderProgram::ShaderProgram(
         std::string_view vert_shader_path,
-        std::string_view frag_shader_path) {
+        std::string_view frag_shader_path,
+        std::initializer_list<std::string> uniform_names) {
 
     std::string vert_shader_src = load_shader_src(vert_shader_path);
     unsigned int vert_shader_id = compile_shader(vert_shader_src, GL_VERTEX_SHADER);
@@ -69,24 +70,29 @@ ShaderProgram::ShaderProgram(
 
     this->id = shader_program_id;
 
-    /* Get location of uniform 'color_in' */
-    this->in_color_location = glGetUniformLocation(this->id, "in_color");
+    /* Get and store location of uniforms */
+    for (auto uniform_name : uniform_names) {
+        this->uniforms[uniform_name] = glGetUniformLocation(this->id, uniform_name.data());
+    }
 }
 
-void ShaderProgram::use() {
+void ShaderProgram::use() const {
     glUseProgram(this->id);
 }
 
-void ShaderProgram::del() {
+void ShaderProgram::del() const {
     glDeleteProgram(this->id);
 }
 
-void ShaderProgram::set_uniform_4f(std::string_view name, float x, float y, float z, float w) {
-    int uniform_location = glGetUniformLocation(this->id, name.data());
-    glUniform4f(uniform_location, x, y, z, w);
+int ShaderProgram::get_uniform_location(std::string_view name) const {
+    auto iter = this->uniforms.find(name.data());
+    if (iter == std::end(this->uniforms)) {
+        throw std::invalid_argument{"No such uniform found"};
+    }
+    return iter->second;
 }
 
-void ShaderProgram::set_uniform_4f(int uniform_location, float x, float y, float z, float w) {
-    glUniform4f(uniform_location, x, y, z, w);
+void ShaderProgram::set_uniform_4f(int location, float x, float y, float z, float w) const {
+    glUniform4f(location, x, y, z, w);
 }
 

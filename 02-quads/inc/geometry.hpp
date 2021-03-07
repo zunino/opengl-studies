@@ -15,6 +15,7 @@ struct Geometry {
     std::array<float, 4> color;
 
     ShaderProgram& shader_program;
+    int in_color_location;
 
     unsigned int vbo;
     unsigned int vao;

@@ -2,18 +2,21 @@
 #define AZ_SHADER_PROGRAM_
 
 #include <string_view>
+#include <unordered_map>
+#include <string>
 
 struct ShaderProgram final {
     ShaderProgram(
             std::string_view vertex_shader_path,
-            std::string_view fragment_shader_path);
-    void use();
-    void del();
-    void set_uniform_4f(std::string_view name, float x, float y, float z, float w);
-    void set_uniform_4f(int uniform_location, float x, float y, float z, float w);
+            std::string_view fragment_shader_path,
+            std::initializer_list<std::string> uniform_names);
+    void use() const;
+    void del() const;
+    void set_uniform_4f(int location, float x, float y, float z, float w) const;
+    int get_uniform_location(std::string_view name) const;
 
     unsigned int id;
-    int in_color_location;
+    std::unordered_map<std::string, int> uniforms;
 };
 
 #endif

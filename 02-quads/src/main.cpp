@@ -54,7 +54,11 @@ int main(void)
         return -1;
     }
 
-    ShaderProgram shader_prog{"shaders/vertex.shader", "shaders/fragment.shader"};
+    ShaderProgram shader_program{
+        "shaders/vertex.shader",
+        "shaders/fragment.shader",
+        {"in_color", "transform"}
+    };
 
     Geometry quad1{
         {
@@ -68,7 +72,7 @@ int main(void)
             3, 1, 2,
         },
         { 0.8f, 0.0f, 0.0f, 1.0f },
-        shader_prog
+        shader_program
     };
 
 
@@ -84,7 +88,7 @@ int main(void)
             3, 1, 2,
         },
         { 0.0f, 0.8f, 0.0f, 1.0f },
-        shader_prog
+        shader_program
     };
 
     Geometry quad3{
@@ -99,7 +103,7 @@ int main(void)
             3, 1, 2,
         },
         { 0.0f, 0.0f, 0.8f, 1.0f },
-        shader_prog
+        shader_program
     };
 
     /* Loop until the user closes the window */
@@ -110,7 +114,7 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT);
 
         /* Activate linked program */
-        shader_prog.use();
+        shader_program.use();
 
         /* Drawing code */
         quad1.draw();
@@ -129,7 +133,7 @@ int main(void)
     quad2.del();
     quad1.del();
 
-    shader_prog.del();
+    shader_program.del();
 
     glfwTerminate();
     
