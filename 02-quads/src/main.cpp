@@ -56,9 +56,6 @@ int main(void)
 
     ShaderProgram shader_prog{"shaders/vertex.shader", "shaders/fragment.shader"};
 
-    /* Get location of uniform 'color_in' */
-    int in_color_location = glGetUniformLocation(shader_prog.id, "in_color");
-
     Geometry quad1{
         {
            -0.7f, -0.2f, 0.0f,
@@ -70,7 +67,8 @@ int main(void)
             0, 1, 2,
             3, 1, 2,
         },
-        { 0.8f, 0.0f, 0.0f, 1.0f }
+        { 0.8f, 0.0f, 0.0f, 1.0f },
+        shader_prog
     };
 
 
@@ -85,7 +83,8 @@ int main(void)
             0, 1, 2,
             3, 1, 2,
         },
-        { 0.0f, 0.8f, 0.0f, 1.0f }
+        { 0.0f, 0.8f, 0.0f, 1.0f },
+        shader_prog
     };
 
     Geometry quad3{
@@ -99,7 +98,8 @@ int main(void)
             0, 1, 2,
             3, 1, 2,
         },
-        { 0.0f, 0.0f, 0.8f, 1.0f }
+        { 0.0f, 0.0f, 0.8f, 1.0f },
+        shader_prog
     };
 
     /* Loop until the user closes the window */
@@ -113,9 +113,9 @@ int main(void)
         shader_prog.use();
 
         /* Drawing code */
-        quad1.draw(shader_prog, in_color_location);
-        quad2.draw(shader_prog, in_color_location);
-        quad3.draw(shader_prog, in_color_location);
+        quad1.draw();
+        quad2.draw();
+        quad3.draw();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

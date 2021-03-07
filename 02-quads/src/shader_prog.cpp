@@ -68,6 +68,9 @@ ShaderProgram::ShaderProgram(
     glDeleteShader(vert_shader_id);
 
     this->id = shader_program_id;
+
+    /* Get location of uniform 'color_in' */
+    this->in_color_location = glGetUniformLocation(this->id, "in_color");
 }
 
 void ShaderProgram::use() {

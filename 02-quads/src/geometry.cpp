@@ -7,8 +7,9 @@
 Geometry::Geometry(
         std::initializer_list<float> vertices,
         std::initializer_list<int> indices,
-        std::array<float, 4> color) 
-    : color{color} {
+        std::array<float, 4> color,
+        ShaderProgram& shader_program) 
+    : n_indices{indices.size()}, color{color}, shader_program{shader_program} {
 
     /* Vertex buffer object (VBO) to store vertex data in GPU memory */
     glGenBuffers(1, &this->vbo);
@@ -29,7 +30,7 @@ Geometry::Geometry(
 
     /* Bind ebo and copy indices; ebo will be recalled by previously-bound vao */
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ebo);
-    std::size_t indices_size = sizeof *std::begin(indices) * indices.size();
+    std::size_t indices_size = sizeof *std::begin(indices) * n_indices;
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, std::begin(indices), GL_STATIC_DRAW);
 
     /* Tell OpenGL how it should interpret vertex data */
@@ -41,13 +42,11 @@ Geometry::Geometry(
 }
 
 void Geometry::draw() {
+    shader_program.set_uniform_4f(
+            shader_program.in_color_location,
+            color[0], color[1], color[2], color[3]);
     glBindVertexArray(this->vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-}
-
-void Geometry::draw(ShaderProgram& shader_prog, int in_color_location) {
-    shader_prog.set_uniform_4f(in_color_location, color[0], color[1], color[2], color[3]);
-    draw();
+    glDrawElements(GL_TRIANGLES, this->n_indices, GL_UNSIGNED_INT, 0);
 }
 
 void Geometry::del() {

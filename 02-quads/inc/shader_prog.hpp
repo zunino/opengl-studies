@@ -13,6 +13,7 @@ struct ShaderProgram final {
     void set_uniform_4f(int uniform_location, float x, float y, float z, float w);
 
     unsigned int id;
+    int in_color_location;
 };
 
 #endif
