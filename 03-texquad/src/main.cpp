@@ -66,7 +66,7 @@ int main(void)
     /* Create a windowed mode window and its OpenGL context */
     GLFWwindow* window;
 
-    window = glfwCreateWindow(640, 480, "Hello Quads", NULL, NULL);
+    window = glfwCreateWindow(1024, 768, "Look! A Textured Quad!", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -91,16 +91,19 @@ int main(void)
     Geometry quad{
         {
             // positions         // texture coordinates
-           -0.8f, -0.45f, 0.0f,  0.0f, 0.0f,  // bottom left
-            0.8f, -0.45f, 0.0f,  1.0f, 0.0f,  // bottom right
             0.8f,  0.45f, 0.0f,  1.0f, 1.0f,  // top right
+            0.8f, -0.45f, 0.0f,  1.0f, 0.0f,  // bottom right
+           -0.8f, -0.45f, 0.0f,  0.0f, 0.0f,  // bottom left
            -0.8f,  0.45f, 0.0f,  0.0f, 1.0f,  // top left
         },
         {
-            0, 1, 2,
-            0, 2, 3,
+            0, 1, 3,
+            1, 2, 3,
         }
     };
+
+    /* I'd like my textures unflipped, please! */
+    stbi_set_flip_vertically_on_load(true);
 
     unsigned int texture = set_up_texture("../tex/texquad.jpeg");
     glBindTexture(GL_TEXTURE_2D, texture);
