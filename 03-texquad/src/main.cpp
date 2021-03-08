@@ -19,6 +19,11 @@
 #include <shader_prog.hpp>
 #include <geometry.hpp>
 
+namespace {
+    const std::size_t WIDTH = 1024;
+    const std::size_t HEIGHT = 768;
+}
+
 unsigned int set_up_texture(std::string_view img_path) {
     /* Load image to be used as texture */
     int img_width;
@@ -66,7 +71,7 @@ int main(void)
     /* Create a windowed mode window and its OpenGL context */
     GLFWwindow* window;
 
-    window = glfwCreateWindow(1024, 768, "Look! A Textured Quad!", NULL, NULL);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "Look! A Textured Quad!", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -85,7 +90,7 @@ int main(void)
     ShaderProgram shader_program{
         "shaders/vertex.shader",
         "shaders/fragment.shader",
-        {"in_color", "transform"}
+        {"in_color", "model", "view", "projection"}
     };
 
     Geometry quad{
@@ -110,6 +115,25 @@ int main(void)
 
     /* Activate linked program */
     shader_program.use();
+
+    /* Model */
+    glm::mat4 model = glm::mat4{1.0f};
+    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3{1.0f, 0.0f, 0.0f});
+
+    /* View */
+    glm::mat4 view = glm::mat4{1.0f};
+    view = glm::translate(view, glm::vec3{0.0f, 0.0f, -2.0f});
+
+    /* Projection */
+    glm::mat4 projection = glm::perspective(glm::radians(45.0f), float{WIDTH}/float{HEIGHT}, 0.1f, 100.0f);
+
+    int model_location = shader_program.get_uniform_location("model");
+    int view_location = shader_program.get_uniform_location("view");
+    int projection_location = shader_program.get_uniform_location("projection");
+
+    shader_program.set_uniform_matrix4fv(model_location, model);
+    shader_program.set_uniform_matrix4fv(view_location, view);
+    shader_program.set_uniform_matrix4fv(projection_location, projection);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
