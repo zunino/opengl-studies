@@ -5,6 +5,7 @@
 #include <string>
 
 #include <glad/glad.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <shader_prog.hpp>
 
@@ -94,5 +95,9 @@ int ShaderProgram::get_uniform_location(std::string_view name) const {
 
 void ShaderProgram::set_uniform_4f(int location, float x, float y, float z, float w) const {
     glUniform4f(location, x, y, z, w);
+}
+
+void ShaderProgram::set_uniform_matrix4fv(int location, const glm::mat4& transform) const {
+    glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(transform));
 }
 

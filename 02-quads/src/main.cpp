@@ -16,10 +16,12 @@
  */
 
 #include <iostream>
+#include <random>
 
 #include <glad/glad.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <shader_prog.hpp>
 #include <geometry.hpp>
@@ -70,56 +72,38 @@ int main(void)
         {
             0, 1, 2,
             3, 1, 2,
-        },
-        { 0.8f, 0.0f, 0.0f, 1.0f },
-        shader_program
+        }
     };
 
+    /* Activate linked program */
+    shader_program.use();
 
-    Geometry quad2{
-        {
-           -0.3f, -0.5f, 0.0f,
-           -0.3f,  0.5f, 0.0f,
-            0.7f, -0.5f, 0.0f,
-            0.7f,  0.5f, 0.0f,
-        },
-        {
-            0, 1, 2,
-            3, 1, 2,
-        },
-        { 0.0f, 0.8f, 0.0f, 1.0f },
-        shader_program
-    };
+    std::random_device rd;
+    std::mt19937 gen{rd()};
+    std::uniform_real_distribution<float> trans_dist{-1.0f, 1.0f};
+    std::uniform_real_distribution<float> scale_dist{0.1f, 1.2f};
+    std::uniform_real_distribution<float> color_dist{0.0f, 1.0f};
 
-    Geometry quad3{
-        {
-           -0.5f, -0.4f, 0.0f,
-           -0.5f,  0.4f, 0.0f,
-            0.3f, -0.4f, 0.0f,
-            0.5f,  0.4f, 0.0f,
-        },
-        {
-            0, 1, 2,
-            3, 1, 2,
-        },
-        { 0.0f, 0.0f, 0.8f, 1.0f },
-        shader_program
+    auto random_transform = [&]() {
+        glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(
+                    trans_dist(gen), trans_dist(gen), trans_dist(gen)));
+        transform = glm::scale(transform, glm::vec3(
+                    scale_dist(gen), scale_dist(gen), scale_dist(gen)));
+        int transform_location = shader_program.get_uniform_location("transform");
+        shader_program.set_uniform_matrix4fv(transform_location, transform);
+
+        int in_color_location = shader_program.get_uniform_location("in_color");
+        shader_program.set_uniform_4f(in_color_location,
+                color_dist(gen), color_dist(gen), color_dist(gen), 1.0f);
     };
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        /* Render here */
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        /* Activate linked program */
-        shader_program.use();
-
         /* Drawing code */
+        random_transform();
         quad1.draw();
-        quad2.draw();
-        quad3.draw();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -129,8 +113,6 @@ int main(void)
     }
 
     /* Deallocate objects */
-    quad3.del();
-    quad2.del();
     quad1.del();
 
     shader_program.del();

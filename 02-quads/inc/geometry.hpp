@@ -5,17 +5,12 @@
 struct Geometry {
     Geometry(
             std::initializer_list<float> vertices,
-            std::initializer_list<int> indices,
-            std::array<float, 4> color,
-            ShaderProgram& shader_program);
+            std::initializer_list<int> indices);
+
     void draw();
     void del();
 
     std::size_t n_indices;
-    std::array<float, 4> color;
-
-    ShaderProgram& shader_program;
-    int in_color_location;
 
     unsigned int vbo;
     unsigned int vao;
