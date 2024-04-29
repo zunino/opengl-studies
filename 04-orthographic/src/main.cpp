@@ -3,10 +3,13 @@
  * case for a typical 2D game or a GUI.
  *
  * Andre Zunino <neyzunino@gmail.com>
- * Created 21 April 2021
+ * Created 21 April 2024
+ * Last modified 22 April 2024
  */
 
 #include <iostream>
+#include <vector>
+#include <memory>
 
 #include <glad/glad.h>
 #include <GL/gl.h>
@@ -57,19 +60,65 @@ GLuint set_up_texture(std::string_view img_path) {
     return texture;
 }
 
-struct TexturizedGeometry {
-    Geometry geometry;
+struct Square {
+    std::shared_ptr<Geometry> geometry;
     GLuint texture;
+    glm::mat4 transformation;
+    const ShaderProgram& shader;
+    GLint model_location;
 
     void draw() {
         glBindTexture(GL_TEXTURE_2D, this->texture);
-        geometry.draw();
+        shader.set_uniform_matrix4fv(model_location, transformation);
+        geometry->draw();
     }
 
     void del() {
-        geometry.del();
+        geometry->del();
+    }
+
+    void rotate(float angle) {
+        transformation = glm::rotate(transformation, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
     }
 };
+
+struct Scene {
+    std::vector<std::shared_ptr<Square>> squares;
+
+    void add_square(std::shared_ptr<Geometry> square_geo, GLuint texture,
+                    glm::mat4 &&transformation, ShaderProgram &shader_program,
+                    GLint model_location) {
+      squares.push_back(std::make_shared<Square>(
+          square_geo, texture, transformation, shader_program, model_location));
+    }
+
+    void del() {
+        for (auto&& square : squares) {
+            square->del();
+        }
+    }
+
+    void draw() {
+        for (auto&& square : squares) {
+            square->draw();
+        }
+    }
+};
+
+Scene scene;
+
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    } else if (key == GLFW_KEY_RIGHT && action == GLFW_REPEAT) {
+        auto& sq2 = scene.squares[1];
+        sq2->rotate(-8.0f);
+    } else if (key == GLFW_KEY_LEFT && action == GLFW_REPEAT) {
+        auto& sq2 = scene.squares[1];
+        sq2->rotate(8.0f);
+    }
+}
 
 int main(void)
 {
@@ -104,80 +153,43 @@ int main(void)
     ShaderProgram shader_program{
         "shaders/vertex.shader",
         "shaders/fragment.shader",
-        {"in_color", "projection"}
+        {"model"}
         /* {"in_color", "model", "view", "projection"} */
     };
 
-    Geometry b1_geo{
-        {
-            // positions       // texture coordinates
-            -0.6f, 1.0f, 0.0f,  1.0f, 1.0f,  // top right
-            -0.6f, 0.6f, 0.0f,  1.0f, 0.0f,  // bottom right
-            -1.0f, 0.6f, 0.0f,  0.0f, 0.0f,  // bottom left
-            -1.0f, 1.0f, 0.0f,  0.0f, 1.0f,  // top left
+    auto square_geo = std::make_shared<Geometry>(
+        std::initializer_list<float>{
+            // positions         // texture coordinates
+             0.2f,  0.2f, 0.0f,  1.0f, 1.0f,  // top right
+             0.2f, -0.2f, 0.0f,  1.0f, 0.0f,  // bottom right
+            -0.2f, -0.2f, 0.0f,  0.0f, 0.0f,  // bottom left
+            -0.2f,  0.2f, 0.0f,  0.0f, 1.0f,  // top left
         },
-        {
+        std::initializer_list<int>{
             0, 1, 3,
             1, 2, 3,
         }
-    };
-
-    Geometry b2_geo{
-        {
-            // positions       // texture coordinates
-            1.0f, 1.0f, 0.0f,  1.0f, 1.0f,  // top right
-            1.0f, 0.6f, 0.0f,  1.0f, 0.0f,  // bottom right
-            0.6f, 0.6f, 0.0f,  0.0f, 0.0f,  // bottom left
-            0.6f, 1.0f, 0.0f,  0.0f, 1.0f,  // top left
-        },
-        {
-            0, 1, 3,
-            1, 2, 3,
-        }
-    };
-
-    Geometry b3_geo{
-        {
-            // positions       // texture coordinates
-            -0.6f, -0.6f, 0.0f,  1.0f, 1.0f,  // top right
-            -0.6f, -1.0f, 0.0f,  1.0f, 0.0f,  // bottom right
-            -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,  // bottom left
-            -1.0f, -0.6f, 0.0f,  0.0f, 1.0f,  // top left
-        },
-        {
-            0, 1, 3,
-            1, 2, 3,
-        }
-    };
-
-    Geometry b4_geo{
-        {
-            // positions       // texture coordinates
-            1.0f, -0.6f, 0.0f,  1.0f, 1.0f,  // top right
-            1.0f, -1.0f, 0.0f,  1.0f, 0.0f,  // bottom right
-            0.6f, -1.0f, 0.0f,  0.0f, 0.0f,  // bottom left
-            0.6f, -0.6f, 0.0f,  0.0f, 1.0f,  // top left
-        },
-        {
-            0, 1, 3,
-            1, 2, 3,
-        }
-    };
+    );
 
     /* I'd like my textures unflipped, please! */
     stbi_set_flip_vertically_on_load(true);
 
-    GLuint b1_texture = set_up_texture("../tex/1.png");
-    GLuint b2_texture = set_up_texture("../tex/2.png");
-    GLuint b3_texture = set_up_texture("../tex/3.png");
-    GLuint b4_texture = set_up_texture("../tex/4.png");
+    GLuint sq1_texture = set_up_texture("../tex/1.png");
+    GLuint sq2_texture = set_up_texture("../tex/2.png");
+    GLuint sq3_texture = set_up_texture("../tex/3.png");
+    GLuint sq4_texture = set_up_texture("../tex/4.png");
 
-    /* glBindTexture(GL_TEXTURE_2D, b1_texture); */
+    glm::mat4 identity = glm::mat4{1.0f};
 
-    auto b1 = TexturizedGeometry{b1_geo, b1_texture};
-    auto b2 = TexturizedGeometry{b2_geo, b2_texture};
-    auto b3 = TexturizedGeometry{b3_geo, b3_texture};
-    auto b4 = TexturizedGeometry{b4_geo, b4_texture};
+    glm::mat4 sq1_transform = glm::translate(identity, glm::vec3(-0.4f, 0.0f, 0.0f));
+
+    glm::mat4 sq2_transform = glm::translate(identity, glm::vec3(0.4f, -0.3f, 0.0f));
+    sq2_transform = glm::rotate(sq2_transform, glm::radians(-42.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    GLint model_location = shader_program.get_uniform_location("model");
+
+    scene.add_square(square_geo, sq1_texture, std::move(sq1_transform), shader_program, model_location);
+    scene.add_square(square_geo, sq2_texture, std::move(sq2_transform), shader_program, model_location);
 
     /* Activate linked program */
     shader_program.use();
@@ -191,33 +203,31 @@ int main(void)
     /* view = glm::translate(view, glm::vec3{0.0f, 0.0f, 0.0f}); */
 
     /* Projection */
-    glm::mat4 projection = glm::ortho(-3.0f, 3.0f, -3.0f, 3.0f);
+    /* glm::mat4 projection = glm::ortho(-3.0f, 3.0f, -3.0f, 3.0f); */
+
+    glfwSetKeyCallback(window, key_callback);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+        /* Poll for and process events */
+        glfwPollEvents();
+
         /* Render here */
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         /* Drawing code */
-        b1.draw();
-        b2.draw();
-        b3.draw();
-        b4.draw();
+        /* square_1.draw(); */
+        /* square_2.draw(); */
+        scene.draw();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
     }
 
     /* Deallocate objects */
-    b4_geo.del();
-    b3_geo.del();
-    b2_geo.del();
-    b1_geo.del();
+    scene.del();
 
     shader_program.del();
 
